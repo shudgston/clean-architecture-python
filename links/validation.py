@@ -1,8 +1,6 @@
 from urllib.parse import urlparse
 from _collections import defaultdict
 
-from links.exceptions import ValidationError
-
 
 def is_url(url):
     parsed = urlparse(url)
@@ -24,28 +22,23 @@ def validate(request, schema):
 
     errors = defaultdict(list)
 
-    try:
-        for key, rule in schema.items():
-            assert isinstance(rule, Schema)
-            testval = request.get(key)
+    for key, rule in schema.items():
+        assert isinstance(rule, Schema)
+        testval = request.get(key)
 
-            if rule.required and testval is None or not testval:
-                errors[key].append('Value is required')
-                break
+        if rule.required and testval is None or not testval:
+            errors[key].append('Value is required')
+            break
 
-            if rule.maxlength and len(testval) > rule.maxlength:
-                errors[key].append('Value exceeds maximum length {}'.format(
-                    rule.maxlength))
+        if rule.maxlength and len(testval) > rule.maxlength:
+            errors[key].append('Value exceeds maximum length {}'.format(
+                rule.maxlength))
 
-            for custom in rule.custom:
-                f, help = custom
-                if not f(testval):
+        for custom in rule.custom:
+            f, help = custom
+            if not f(testval):
                     errors[key].append(help)
 
-    except AssertionError as ex:
-        raise ValidationError(str(ex))
-
-    # return True
     return (len(errors) == 0, errors,)
 
 
