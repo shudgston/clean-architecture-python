@@ -1,0 +1,10 @@
+{% import "bootstrap/wtf.html" as wtf %}
+{% extends "base.html" %}
+{% block title %}Bookmarks{% endblock %}
+
+{% block page_content %}
+
+  {{ wtf.quick_form(form) }}
+  <p>Login success: {{ is_authenticated }}</p>
+
+{% endblock %}

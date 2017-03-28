@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Bookmarks{% endblock %}
+
+{% block page_content %}
+  <a href="{{ url_for('main.create') }}">Create</a>
+
+  <hr/>
+  <ul class="list-unstyled bookmarks-list">
+    {% for b in bookmarks %}
+      <li>
+        <a class="bookmark-name" href="{{ b.url }}" target="_blank">{{ b.name }}</a>
+        <small>({{ b.host }})</small>
+        <br/>
+        <small>{{ b.date_created }}</small>
+        <br/>
+        <a href="{{ url_for('main.bookmark_details', bookmark_id=b.bookmark_id) }}">[info]</a>
+      </li>
+  {% endfor %}
+  </ul>
+  <hr/>
+{% endblock %}

@@ -1,0 +1,11 @@
+.page-content-wrapper {
+    padding-top: 50px;
+}
+
+.bookmarks-list li {
+    margin-bottom: 1.5%;
+}
+
+.bookmark-name {
+    font-size: 20px;
+}
