@@ -1,7 +1,6 @@
 import unittest
 
 from links import validation
-from links.exceptions import ValidationError
 
 
 class IsURLTest(unittest.TestCase):
@@ -18,12 +17,6 @@ class IsURLTest(unittest.TestCase):
 
 
 class ValidationSchemaTest(unittest.TestCase):
-
-    def _assert_exception_message_eq(self, request, schema, message):
-        try:
-            validation.validate(request, schema)
-        except ValidationError as ex:
-            self.assertEqual(message, str(ex))
 
     def test_required_value_present(self):
         request = {'foo': 'foo is here'}
