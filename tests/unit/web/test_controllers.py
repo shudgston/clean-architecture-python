@@ -1,7 +1,8 @@
 from unittest import TestCase, mock
 
+import web.app.main.views
 from web.app.main import presentation
-from web.app.auth.presentation import AuthenticateUserController, AuthenticateUserPresenter
+from web.app.auth.views import AuthenticateUserController, AuthenticateUserPresenter
 
 
 class ControllerTestMixin:
@@ -23,7 +24,7 @@ class BookmarkListControllerTest(ControllerTestMixin, TestCase):
 
     def setUp(self):
         super(BookmarkListControllerTest, self).setUp()
-        self.controller = presentation.BookmarkListController(
+        self.controller = web.app.main.views.BookmarkListController(
             self.uc,
             self.presenter,
             self.view
@@ -39,7 +40,7 @@ class BookmarkDetailsControllerTest(ControllerTestMixin, TestCase):
 
     def setUp(self):
         super(BookmarkDetailsControllerTest, self).setUp()
-        self.controller = presentation.BookmarkDetailsController(
+        self.controller = web.app.main.views.BookmarkDetailsController(
             self.uc,
             self.presenter,
             self.view
@@ -56,7 +57,7 @@ class CreateBookmarkControllerTest(ControllerTestMixin, TestCase):
 
     def setUp(self):
         super(CreateBookmarkControllerTest, self).setUp()
-        self.controller = presentation.CreateBookmarkController(
+        self.controller = web.app.main.views.CreateBookmarkController(
             self.uc,
             self.presenter,
             self.view

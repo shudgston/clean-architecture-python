@@ -1,6 +1,7 @@
 from datetime import datetime
 from unittest import TestCase
 
+import web.app.main.views
 from web.app.main import presentation
 
 from links.usecases.bookmarks import BookmarkDetails, CreateBookmarkResponse
@@ -11,7 +12,7 @@ class BookmarkDetailsPresenterTest(TestCase):
     def test_presenter_creates_view_model(self):
         dt = datetime(year=2017, month=1, day=1)
         response = BookmarkDetails('id1', 'test', 'web://test.com', dt)
-        presenter = presentation.BookmarkDetailsPresenter()
+        presenter = web.app.main.views.BookmarkDetailsPresenter()
         presenter.present(response)
         view_model = presenter.get_view_model()
         expected = {
@@ -33,7 +34,7 @@ class BookmarkListPresentationTest(TestCase):
             BookmarkDetails('id1', 'test1', 'web://test.com', dt),
             BookmarkDetails('id2', 'test2', 'web://test.com', dt),
         ]
-        presenter = presentation.BookmarkListPresenter()
+        presenter = web.app.main.views.BookmarkListPresenter()
         presenter.present(response)
         view_model = presenter.get_view_model()
         expected = {
@@ -52,7 +53,7 @@ class CreateBookmarkPresentationTest(TestCase):
 
     def test_presenter_creates_view_model(self):
         response = CreateBookmarkResponse('id1', {})
-        presenter = presentation.CreateBookmarkPresenter()
+        presenter = web.app.main.views.CreateBookmarkPresenter()
         presenter.present(response)
         view_model = presenter.get_view_model()
         expected = {'bookmark_id': 'id1', 'errors': {}}

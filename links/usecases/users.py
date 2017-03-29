@@ -15,10 +15,13 @@ class InputBoundary(metaclass=abc.ABCMeta):
 
 class AuthenticateUserUseCase(InputBoundary):
 
-    def __init__(self):
-        self._auth_success_callback = None
-
     def authenticate_user(self, user_id, password, presenter):
+        """
+        :param user_id:
+        :param password:
+        :param presenter:
+        :return:
+        """
         password_hash = context.user_repo.get_password_hash(user_id)
         verified = check_password(password, password_hash)
         LOGGER.info("Auth succeeded? %s", verified)
