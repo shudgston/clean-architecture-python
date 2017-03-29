@@ -16,8 +16,7 @@ CONTEXT = {
     'PASSWORD_CTX': CryptContext(
         schemes=['pbkdf2_sha256'],
         default='pbkdf2_sha256',
-        all__vary_rounds=0.1,
-        all__default_rounds=100000)
+        pbkdf2_sha256__default_rounds=100000)
 }
 
 
@@ -26,7 +25,6 @@ def set_testing_ctx():
     CONTEXT['PASSWORD_CTX'] = CryptContext(
         schemes=['pbkdf2_sha256'],
         default='pbkdf2_sha256',
-        all__vary_rounds=0.1,
         pbkdf2_sha256__default_rounds=10)
 
 
