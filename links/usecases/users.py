@@ -1,4 +1,3 @@
-import abc
 from links.context import context
 from links.logger import get_logger
 from links.security import check_password
@@ -6,14 +5,7 @@ from links.security import check_password
 LOGGER = get_logger(__name__)
 
 
-class InputBoundary(metaclass=abc.ABCMeta):
-
-    @abc.abstractmethod
-    def authenticate_user(self, user_id, password, presenter):
-        pass
-
-
-class AuthenticateUserUseCase(InputBoundary):
+class AuthenticateUserUseCase:
 
     def authenticate_user(self, user_id, password, presenter):
         """

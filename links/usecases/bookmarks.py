@@ -1,4 +1,3 @@
-import abc
 import datetime
 import uuid
 from collections import namedtuple
@@ -22,28 +21,7 @@ CreateBookmarkResponse = namedtuple(
 )
 
 
-class ListBookmarksInputBoundary(metaclass=abc.ABCMeta):
-
-    @abc.abstractmethod
-    def list_bookmarks(self, user_id, presenter):
-        pass
-
-
-class BookmarkDetailsInputBoundary(metaclass=abc.ABCMeta):
-
-    @abc.abstractmethod
-    def bookmark_details(self, user_id, bookmark_id, presenter):
-        pass
-
-
-class CreateBookmarkInputBoundary(metaclass=abc.ABCMeta):
-
-    @abc.abstractmethod
-    def create_bookmark(self, user_id, name, url):
-        pass
-
-
-class BookmarkDetailsUseCase(BookmarkDetailsInputBoundary):
+class BookmarkDetailsUseCase:
     """Fetch a bookmarks details"""
 
     def bookmark_details(self, user_id, bookmark_id, presenter):
@@ -72,7 +50,7 @@ class BookmarkDetailsUseCase(BookmarkDetailsInputBoundary):
             raise Exception("No Data")
 
 
-class CreateBookmarkUseCase(CreateBookmarkInputBoundary):
+class CreateBookmarkUseCase:
     """Creates a new bookmark"""
 
     _validation_schema = {
@@ -119,7 +97,7 @@ class CreateBookmarkUseCase(CreateBookmarkInputBoundary):
             raise UserError(msg)
 
 
-class ListBookmarksUseCase(ListBookmarksInputBoundary):
+class ListBookmarksUseCase:
     """Constructs a list of all bookmarks owned by a user."""
 
     def list_bookmarks(self, user_id, presenter):

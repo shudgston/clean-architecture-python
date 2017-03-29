@@ -3,12 +3,12 @@ from unittest import mock
 
 from links.context import context
 from links.entities import Bookmark, User
-from links.usecases.bookmarks import ListBookmarksInputBoundary, ListBookmarksUseCase
+from links.usecases.bookmarks import ListBookmarksUseCase
 from .spies import PresenterSpy
 from ..helpers import setup_testing_context
 
 
-class ListBookmarksUseCaseSpy(ListBookmarksInputBoundary):
+class ListBookmarksUseCaseSpy:
 
     execute_called = False
     requested_user = None

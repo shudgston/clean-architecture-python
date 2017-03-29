@@ -1,8 +1,8 @@
 from unittest import TestCase, mock
 
-import web.app.main.views
-from web.app.main import presentation
 from web.app.auth.views import AuthenticateUserController, AuthenticateUserPresenter
+from web.app.main.views import BookmarkListController, BookmarkDetailsController, \
+    CreateBookmarkController
 
 
 class ControllerTestMixin:
@@ -24,7 +24,7 @@ class BookmarkListControllerTest(ControllerTestMixin, TestCase):
 
     def setUp(self):
         super(BookmarkListControllerTest, self).setUp()
-        self.controller = web.app.main.views.BookmarkListController(
+        self.controller = BookmarkListController(
             self.uc,
             self.presenter,
             self.view
@@ -40,7 +40,7 @@ class BookmarkDetailsControllerTest(ControllerTestMixin, TestCase):
 
     def setUp(self):
         super(BookmarkDetailsControllerTest, self).setUp()
-        self.controller = web.app.main.views.BookmarkDetailsController(
+        self.controller = BookmarkDetailsController(
             self.uc,
             self.presenter,
             self.view
@@ -57,7 +57,7 @@ class CreateBookmarkControllerTest(ControllerTestMixin, TestCase):
 
     def setUp(self):
         super(CreateBookmarkControllerTest, self).setUp()
-        self.controller = web.app.main.views.CreateBookmarkController(
+        self.controller = CreateBookmarkController(
             self.uc,
             self.presenter,
             self.view
@@ -93,7 +93,7 @@ class AuthenticateUserControllerTest(ControllerTestMixin, TestCase):
             self.view
         )
 
-        with mock.patch('web.app.auth.presentation.login_user') as m_login_user:
+        with mock.patch('web.app.auth.views.login_user') as m_login_user:
             controller.handle(form)
 
     def test_usecase_authenticate_user_is_called(self):
