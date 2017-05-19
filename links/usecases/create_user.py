@@ -27,7 +27,6 @@ class CreateUserUseCase(CreateUserInputBoundary):
         response = {'user_created': False, 'username': username}
 
         if context.user_repo.exists(username):
-            LOGGER.error("User '%s' already exists", username)
             return response
         else:
             user = User(username)

@@ -45,7 +45,7 @@ class MemoryBookmarkRepo(BookmarkRepo):
                 doc['name'],
                 doc['url']
             ) for doc in docs
-            ]
+        ]
 
         return sorted(entities, key=lambda x: x.date_created)
 

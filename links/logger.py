@@ -7,7 +7,7 @@ LOGCONFIG = {
     'version': 1,
     'formatters': {
         'default': {
-            'format': '[%(levelname)s] %(asctime)s; %(name)s; -- %(message)s'
+            'format': '%(asctime)s - %(levelname)s - %(name)s -- %(message)s'
         }
     },
     'handlers': {
@@ -17,12 +17,12 @@ LOGCONFIG = {
             'level': Settings.LOGGING_LEVEL,
             'stream': sys.stderr,
         },
-        'file': {
-            'class': 'logging.handlers.WatchedFileHandler',
-            'formatter': 'default',
-            'level': Settings.LOGGING_LEVEL,
-            'filename': 'tmp.log',
-        }
+    #     'file': {
+    #         'class': 'logging.handlers.WatchedFileHandler',
+    #         'formatter': 'default',
+    #         'level': Settings.LOGGING_LEVEL,
+    #         'filename': 'tmp.log',
+    #     }
     },
     'root': {
         'handlers': ['console'],

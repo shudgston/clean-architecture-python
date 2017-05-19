@@ -8,4 +8,3 @@ print("--- TOP LEVEL TEST SETUP ---")
 
 # lower amount of rounds when hashing passwords, for faster tests
 lower_rounds()
-

@@ -36,7 +36,7 @@ class ListBookmarksUseCaseTest(UseCaseTest):
 
     @mock.patch('links.usecases.list_bookmarks.context')
     def test_repo_error_raises_exception(self, ctx):
-        ctx.bookmark_repo.get_by_user.side_effect = Exception("Database Error")
+        ctx.bookmark_repo.get_by_user.side_effect = Exception("Mocked Database Error")
         with self.assertRaises(exceptions.RepositoryError):
             self.uc.list_bookmarks(self.user)
 

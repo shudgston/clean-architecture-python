@@ -14,7 +14,7 @@ LOGGER = get_logger(__name__)
 
 CreateBookmarkResponse = namedtuple(
     'CreateBookmarkResponse',
-    ['bookmark_id',  'errors']
+    ['bookmark_id', 'errors']
 )
 
 
@@ -60,7 +60,6 @@ class CreateBookmarkUseCase(CreateBookmarkInputBoundary):
         if context.user_repo.exists(user_id):
             bookmark_id = uuid.uuid4().hex
             bookmark = Bookmark(bookmark_id, user_id, name, url, date_created=date_created)
-            LOGGER.info("create_bookmark: %s", bookmark)
             context.bookmark_repo.save(bookmark)
             response = CreateBookmarkResponse(bookmark_id=bookmark_id, errors=errors)
             return response
