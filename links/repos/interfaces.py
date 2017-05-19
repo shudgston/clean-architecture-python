@@ -1,5 +1,7 @@
 import abc
 
+# TODO: make create and update distinct functions. Don't have save() do both.
+
 
 class BookmarkRepo(metaclass=abc.ABCMeta):
     @abc.abstractmethod
@@ -11,13 +13,13 @@ class BookmarkRepo(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def get_by_user(self, user_id):
+    def get_by_user(self, user_id, limit=100):
         pass
 
 
 class UserRepo(metaclass=abc.ABCMeta):
     @abc.abstractmethod
-    def save(self, user_id):
+    def save(self, user):
         pass
 
     @abc.abstractmethod

@@ -5,3 +5,19 @@ class UserError(Exception):
     on a front end.
     """
     pass
+
+
+class LinksError(Exception):
+    pass
+
+
+class RepositoryError(LinksError):
+    pass
+
+
+class UserNotFound(LinksError):
+    pass
+
+
+class BookmarkNotFound(LinksError):
+    pass

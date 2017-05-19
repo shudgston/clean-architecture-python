@@ -1,6 +1,5 @@
 import abc
 from datetime import datetime
-from urllib.parse import urlparse
 
 
 class Entity(metaclass=abc.ABCMeta):

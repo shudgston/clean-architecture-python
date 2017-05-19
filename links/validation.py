@@ -5,7 +5,7 @@ from _collections import defaultdict
 def is_url(url):
     parsed = urlparse(url)
     if parsed.scheme and parsed.netloc:
-        if parsed.scheme in ['web', 'https']:
+        if parsed.scheme in ['http', 'https']:
             return True
     return False
 
@@ -19,11 +19,10 @@ def validate(request, schema):
     """
     assert isinstance(request, dict), "request must be a dictionary"
     assert isinstance(schema, dict), "schema must be a dictionary"
-
     errors = defaultdict(list)
 
     for key, rule in schema.items():
-        assert isinstance(rule, Schema)
+        assert isinstance(rule, Schema), "rule must be instance of Schema"
         testval = request.get(key)
 
         if rule.required and testval is None or not testval:

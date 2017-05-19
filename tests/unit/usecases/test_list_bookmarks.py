@@ -1,27 +1,18 @@
-import unittest
-from unittest import mock
+from datetime import datetime
+from unittest import TestCase, mock
 
 from links.context import context
+from links import exceptions
 from links.entities import Bookmark, User
-from links.usecases.bookmarks import ListBookmarksUseCase
-from .spies import PresenterSpy
-from ..helpers import setup_testing_context
+from links.usecases.list_bookmarks import ListBookmarksUseCase, ListBookmarksPresenter, ListBookmarksController
+from links.usecases.bookmark_details import BookmarkDetails
+from .base import UseCaseTest
 
 
-class ListBookmarksUseCaseSpy:
-
-    execute_called = False
-    requested_user = None
-
-    def execute(self, request, presenter):
-        self.execute_called = True
-        self.requested_user = request.get('user_id')
-
-
-class ListBookmarksUseCaseTest(unittest.TestCase):
+class ListBookmarksUseCaseTest(UseCaseTest):
 
     def setUp(self):
-        setup_testing_context()
+        super().setUp()
         self.user = User('user')
         self.otheruser = User('otheruser')
         self.unknownuser = User('unknownuser')
@@ -32,84 +23,67 @@ class ListBookmarksUseCaseTest(unittest.TestCase):
     def test_user_with_one_bookmarks_sees_one(self):
         bookmark = Bookmark('0', self.user.id, 'name', 'url')
         context.bookmark_repo.save(bookmark)
-        presenter_spy = PresenterSpy()
-        self.uc.list_bookmarks(self.user.id, presenter_spy)
-        self.assertEqual(len(presenter_spy.response_model), 1)
+        rv = self.uc.list_bookmarks(self.user.id)
+        self.assertEqual(len(rv), 1)
 
     def test_user_without_bookmarks_sees_none(self):
-        presenter_spy = PresenterSpy()
-        self.uc.list_bookmarks(self.otheruser.id, presenter_spy)
-        self.assertEqual(len(presenter_spy.response_model), 0)
+        rv = self.uc.list_bookmarks(self.otheruser.id)
+        self.assertEqual(len(rv), 0)
 
-    def test_unknown_user_sees_none(self):
-        presenter_spy = PresenterSpy()
-        self.uc.list_bookmarks(self.unknownuser.id, presenter_spy)
-        self.assertEqual(len(presenter_spy.response_model), 0)
+    def test_unknown_user_raises_exception(self):
+        with self.assertRaises(exceptions.UserNotFound):
+            self.uc.list_bookmarks(self.unknownuser)
 
-    def test_exception_handling(self):
-        context.bookmark_repo = mock.Mock()
-        context.bookmark_repo.get_by_user.side_effect = Exception('Mocked Internal Error')
-
-        bookmark = Bookmark('0', self.user.id, 'name', 'url')
-        context.bookmark_repo.save(bookmark)
-        presenter_spy = PresenterSpy()
-        request = {'user_id': self.user.id}
-
-        with self.assertRaises(Exception):
-            self.uc.execute(request, presenter_spy)
+    @mock.patch('links.usecases.list_bookmarks.context')
+    def test_repo_error_raises_exception(self, ctx):
+        ctx.bookmark_repo.get_by_user.side_effect = Exception("Database Error")
+        with self.assertRaises(exceptions.RepositoryError):
+            self.uc.list_bookmarks(self.user)
 
 
-# class ListBookmarksPresenterTest(unittest.TestCase):
-#
-#     def test_present_formats_viewmodel(self):
-#         date_created = datetime.datetime(year=2017, month=1, day=1)
-#         response_model = [
-#             BookmarkDetails('id1', 'name1', 'url1', date_created),
-#             BookmarkDetails('id2', 'name2', 'url2', date_created),
-#             BookmarkDetails('id3', 'name3', 'url3', date_created),
-#             ]
-#
-#         presenter = ListBookmarksPresenter()
-#         presenter.present(response_model)
-#         viewmodel = presenter.get_view_model()
-#
-#         print(viewmodel)
-#
-#         row1 = viewmodel[0]
-#         print(row1)
-#         self.assertEqual(row1.bookmark_id, 'id1')
-#         self.assertEqual(row1.name, 'name1')
-#         self.assertEqual(row1.url, 'url1')
-#         self.assertEqual(row1.date_created, 'Jan 1, 2017')
-#         self.assertEqual(row1.date_created_iso, '2017-01-01T00:00:00')
+class ListBookmarksPresenterTest(TestCase):
+
+    def test_presenter_creates_view_model(self):
+            dt = datetime(year=2017, month=1, day=1)
+            response = [
+                BookmarkDetails('id1', 'test1', 'web://test.com', dt),
+                BookmarkDetails('id2', 'test2', 'web://test.com', dt),
+            ]
+            presenter = ListBookmarksPresenter()
+            presenter.present(response)
+            expected = {
+                'bookmark_id': 'id1',
+                'name': 'test1',
+                'url': 'web://test.com',
+                'date_created': 'Jan 1, 2017',
+                'date_created_iso': '2017-01-01T00:00:00',
+                'host': 'test.com'
+            }
+            self.assertEqual(2, len(presenter.get_view_model()))
+            self.assertDictEqual(expected, presenter.get_view_model()[0])
 
 
-# class ListBookmarksControllerTest(unittest.TestCase):
-#
-#     def setUp(self):
-#         setup_testing_context()
-#         self.user = User('user')
-#         context.user_repo.save(self.user)
-#         self.presenter_spy = PresenterSpy()
-#         self.view_spy = ViewSpy()
-#         self.usecase_spy = ListBookmarksUseCaseSpy()
-#
-#     def test_usecase_invocation(self):
-#         request = {'user_id': self.user.id}
-#         controller = ListBookmarksController(
-#             self.usecase_spy, self.presenter_spy, self.view_spy)
-#
-#         controller.handle(request)
-#         self.assertTrue(self.usecase_spy.execute_called)
-#         self.assertEqual(self.usecase_spy.requested_user, self.user.id)
-#
-#     def test_controller_sends_view_model_to_the_view(self):
-#         # Init a fake value for the presenter's view model.
-#         # This value should end up in the view.
-#         self.presenter_spy._view_model = {'test_value': uuid.uuid4().hex}
-#         controller = ListBookmarksController(
-#             self.usecase_spy, self.presenter_spy, self.view_spy)
-#
-#         controller.handle({})
-#         self.assertTrue(self.view_spy.generate_view_called)
-#         self.assertEqual(self.presenter_spy.get_view_model(), self.view_spy.view_model)
+class ListBookmarksControllerTest(TestCase):
+
+    def setUp(self):
+        self.usecase = mock.Mock()
+        self.presenter = mock.Mock()
+        self.view = mock.Mock()
+        self.controller = ListBookmarksController(self.usecase, self.presenter, self.view)
+        self.request = dict(user_id='user_id', filterkey='all')
+
+    def test_usecase_is_called(self):
+        self.controller.handle(self.request)
+        self.usecase.list_bookmarks.assert_called_with('user_id', filterkey='all')
+
+    def test_controller_passes_response_model_to_presenter(self):
+        response = BookmarkDetails('id', 'name', 'url', datetime.utcnow())
+        self.usecase.list_bookmarks.return_value = response
+        self.controller.handle(self.request)
+        self.presenter.present.assert_called_with(response)
+
+    def test_controller_passes_view_model_to_view(self):
+        view_model = {'fake_view_model': True}
+        self.presenter.get_view_model.return_value = view_model
+        self.controller.handle(self.request)
+        self.view.generate_view.assert_called_with(view_model)

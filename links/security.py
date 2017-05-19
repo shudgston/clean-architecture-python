@@ -8,9 +8,6 @@ PASSWORD_CTX.verify('123', hash)
 """
 from passlib.context import CryptContext
 
-from links.logger import get_logger
-
-LOGGER = get_logger(__name__)
 
 CONTEXT = {
     'PASSWORD_CTX': CryptContext(
@@ -20,18 +17,18 @@ CONTEXT = {
 }
 
 
-def set_testing_ctx():
+def lower_rounds():
     """For unit testing (less rounds, faster)"""
     CONTEXT['PASSWORD_CTX'] = CryptContext(
         schemes=['pbkdf2_sha256'],
         default='pbkdf2_sha256',
-        pbkdf2_sha256__default_rounds=10)
+        pbkdf2_sha256__default_rounds=1)
 
 
 def create_password_hash(password):
     """
     """
-    return CONTEXT['PASSWORD_CTX'].encrypt(password)
+    return CONTEXT['PASSWORD_CTX'].hash(password)
 
 
 def check_password(password, password_hash):
@@ -39,8 +36,9 @@ def check_password(password, password_hash):
     """
     try:
         verified = CONTEXT['PASSWORD_CTX'].verify(password, password_hash)
-    except ValueError as ex:
-        LOGGER.exception(ex)
+    except TypeError:
+        verified = False
+    except ValueError:
         verified = False
 
     return verified

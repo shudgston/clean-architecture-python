@@ -1,22 +1,26 @@
 {% extends "base.html" %}
-
 {% block title %}Bookmarks{% endblock %}
-
 {% block page_content %}
-  <a href="{{ url_for('main.create') }}">Create</a>
 
-  <hr/>
+{% if bookmarks %}
+
+  <ul class="nav nav-pills">
+   <li><a href="{{ url_for('main.index', filterkey='recent') }}">most recent</a></li>
+   <li><a href="{{ url_for('main.index', filterkey='everything') }}">everything</a></li>
+  </ul>
+
   <ul class="list-unstyled bookmarks-list">
     {% for b in bookmarks %}
       <li>
         <a class="bookmark-name" href="{{ b.url }}" target="_blank">{{ b.name }}</a>
-        <small>({{ b.host }})</small>
         <br/>
-        <small>{{ b.date_created }}</small>
-        <br/>
-        <a href="{{ url_for('main.bookmark_details', bookmark_id=b.bookmark_id) }}">[info]</a>
+        <small>{{ b.host }}, {{ b.date_created }}</small>
+        <a href="{{ url_for('main.bookmark_details', bookmark_id=b.bookmark_id) }}"><span class="glyphicon glyphicon-edit"></span></a>
       </li>
   {% endfor %}
   </ul>
-  <hr/>
+{%  else %}
+  <p>There is nothing here yet.</p>
+{% endif %}
+
 {% endblock %}

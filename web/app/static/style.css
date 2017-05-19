@@ -1,5 +1,5 @@
 .page-content-wrapper {
-    padding-top: 50px;
+    padding-top: 75px;
 }
 
 .bookmarks-list li {
@@ -7,5 +7,5 @@
 }
 
 .bookmark-name {
-    font-size: 20px;
+    /*font-size: 16px;*/
 }

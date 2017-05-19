@@ -6,9 +6,9 @@ from links import validation
 class IsURLTest(unittest.TestCase):
 
     def test_value_is_valid_url(self):
-        self.assertTrue(validation.is_url('web://localhost'))
-        self.assertTrue(validation.is_url('web://example.com'))
-        self.assertTrue(validation.is_url('web://www.test.com'))
+        self.assertTrue(validation.is_url('http://localhost'))
+        self.assertTrue(validation.is_url('http://example.com'))
+        self.assertTrue(validation.is_url('http://www.test.com'))
 
     def test_value_is_invalid_url(self):
         self.assertFalse(validation.is_url('localhost'))
@@ -77,7 +77,7 @@ class ValidationSchemaTest(unittest.TestCase):
     def test_given_schema_should_pass(self):
         request = {
             'name': 'url name',
-            'url': 'web://www.example.com'
+            'url': 'http://www.example.com'
         }
 
         defaults = {

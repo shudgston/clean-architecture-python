@@ -1,10 +1,14 @@
-import pprint
+"""
+In-memory implementations of repository interfaces.
+These should only be used for testing or demonstration purposes.
+"""
 
 from links.repos.interfaces import BookmarkRepo, UserRepo
 from links.entities import Bookmark, User, NullUser, NullBookmark
 
 
 class MemoryBookmarkRepo(BookmarkRepo):
+
     def __init__(self):
         self._data = []
 
@@ -32,7 +36,7 @@ class MemoryBookmarkRepo(BookmarkRepo):
             )
         return NullBookmark()
 
-    def get_by_user(self, user_id):
+    def get_by_user(self, user_id, limit=None):
         docs = [doc for doc in self._data if doc['user_id'] == user_id]
         entities = [
             Bookmark(
@@ -47,6 +51,7 @@ class MemoryBookmarkRepo(BookmarkRepo):
 
 
 class MemoryUserRepo(UserRepo):
+
     def __init__(self):
         self._data = []
 

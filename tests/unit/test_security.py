@@ -1,8 +1,8 @@
 from unittest import TestCase
-from links.security import create_password_hash, check_password, set_testing_ctx
+from links.security import create_password_hash, check_password, lower_rounds
 
 # lowers the number of passes so tests are not so slow.
-set_testing_ctx()
+lower_rounds()
 
 
 class CreatePasswordHasHTest(TestCase):
@@ -22,3 +22,7 @@ class CheckPasswordTest(TestCase):
     def test_password_does_not_match_hash(self):
         hash = create_password_hash('password')
         self.assertFalse(check_password('wrong', hash))
+
+    def test_invalid_hash(self):
+        hash = {'not a string': True}
+        self.assertFalse(check_password('password', hash))
