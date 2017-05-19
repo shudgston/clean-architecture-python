@@ -1,0 +1,4 @@
+CouchDB==1.1
+nose==1.3.7
+python-dateutil==2.6.0
+passlib==1.7.1
