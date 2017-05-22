@@ -5,7 +5,6 @@ from links.context import context
 from links import exceptions
 from links.entities import Bookmark, User
 from links.usecases.list_bookmarks import ListBookmarksUseCase, ListBookmarksPresenter, ListBookmarksController
-from links.usecases.bookmark_details import BookmarkDetails
 from .base import UseCaseTest
 
 
@@ -46,18 +45,29 @@ class ListBookmarksPresenterTest(TestCase):
     def test_presenter_creates_view_model(self):
             dt = datetime(year=2017, month=1, day=1)
             response = [
-                BookmarkDetails('id1', 'test1', 'web://test.com', dt),
-                BookmarkDetails('id2', 'test2', 'web://test.com', dt),
+                {
+                    'id': 'id1',
+                    'name': 'test1',
+                    'url': 'http://test.com',
+                    'date_created': dt
+                },
+                {
+                    'id': 'id2',
+                    'name': 'test2',
+                    'url': 'http://test.com',
+                    'date_created': dt
+                },
             ]
             presenter = ListBookmarksPresenter()
             presenter.present(response)
             expected = {
                 'bookmark_id': 'id1',
                 'name': 'test1',
-                'url': 'web://test.com',
+                'url': 'http://test.com',
                 'date_created': 'Jan 1, 2017',
                 'date_created_iso': '2017-01-01T00:00:00',
-                'host': 'test.com'
+                'host': 'test.com',
+                'slug': 'test1',
             }
             self.assertEqual(2, len(presenter.get_view_model()))
             self.assertDictEqual(expected, presenter.get_view_model()[0])
@@ -77,7 +87,12 @@ class ListBookmarksControllerTest(TestCase):
         self.usecase.list_bookmarks.assert_called_with('user_id', filterkey='all')
 
     def test_controller_passes_response_model_to_presenter(self):
-        response = BookmarkDetails('id', 'name', 'url', datetime.utcnow())
+        response = {
+            'id': 'id',
+            'name': 'test1',
+            'url': 'http://test.com',
+            'date_created': datetime.utcnow(),
+        }
         self.usecase.list_bookmarks.return_value = response
         self.controller.handle(self.request)
         self.presenter.present.assert_called_with(response)

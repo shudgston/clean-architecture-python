@@ -1,6 +1,6 @@
 from datetime import datetime
 from unittest import TestCase
-from links.formatting import display_date, iso_date, host_from_url
+from links.formatting import display_date, iso_date, host_from_url, slugify
 
 
 class FormatDisplayDateTest(TestCase):
@@ -35,3 +35,14 @@ class HostFromURLTest(TestCase):
         self.assertEqual('', host_from_url(''))
         # urlparse behavior
         self.assertEqual(b'', host_from_url(None))
+
+
+class SlugifyTest(TestCase):
+
+    def test_slugify(self):
+        self.assertEqual('hello-world', slugify('HELLO world!'))
+        self.assertEqual('hello-world', slugify('       HELLO   world!'))
+        self.assertEqual('ok', slugify(' o*@#*$%@#$%*k'))
+        self.assertEqual('δ', slugify('\u0394'))
+        self.assertEqual('helloworld', slugify('&&HELLO@WORLD!'))
+        self.assertEqual(200, len(slugify('longer than 200' * 200)))

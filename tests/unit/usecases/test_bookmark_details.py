@@ -5,7 +5,7 @@ from links.context import context
 from links.entities import User, Bookmark
 from links.exceptions import BookmarkNotFound
 from links.usecases.bookmark_details import BookmarkDetailsUseCase, BookmarkDetailsPresenter, \
-    BookmarkDetails, BookmarkDetailsController
+    BookmarkDetailsController
 from .base import UseCaseTest
 
 
@@ -26,10 +26,10 @@ class BookmarkDetailsUseCaseTest(UseCaseTest):
             Bookmark('id1', self.user.id, 'test', 'http://test.com', date_created=now))
 
         rv = self.uc.get_bookmark_details(self.user.id, 'id1')
-        self.assertEqual(rv.bookmark_id, 'id1')
-        self.assertEqual(rv.name, 'test')
-        self.assertEqual(rv.url, 'http://test.com')
-        self.assertEqual(rv.date_created, now)
+        self.assertEqual(rv['id'], 'id1')
+        self.assertEqual(rv['name'], 'test')
+        self.assertEqual(rv['url'], 'http://test.com')
+        self.assertEqual(rv['date_created'], now)
 
     def test_user_with_none_cannot_see_details(self):
         with self.assertRaises(BookmarkNotFound):
@@ -54,7 +54,12 @@ class BookmarkDetailsPresenterTest(TestCase):
 
     def test_presenter_creates_view_model(self):
         now = datetime.datetime(year=2017, month=1, day=1)
-        response = BookmarkDetails('id', 'name', 'http://test.com', now)
+        response = {
+            'id': 'id',
+            'name': 'name',
+            'url': 'http://test.com',
+            'date_created': now
+        }
         presenter = BookmarkDetailsPresenter()
         presenter.present(response)
         view_model = {
@@ -63,7 +68,8 @@ class BookmarkDetailsPresenterTest(TestCase):
             'url': 'http://test.com',
             'date_created': 'Jan 1, 2017',
             'date_created_iso': '2017-01-01T00:00:00',
-            'host': 'test.com'
+            'host': 'test.com',
+            'slug': 'name',
         }
         self.assertEqual(view_model, presenter.get_view_model())
 
@@ -82,7 +88,12 @@ class BookmarkDetailsControllerTest(TestCase):
         self.usecase.get_bookmark_details.assert_called_with('user_id', 'bookmark_id')
 
     def test_controller_passes_response_model_to_presenter(self):
-        response = BookmarkDetails('id', 'name', 'url', datetime.datetime.utcnow())
+        response = {
+            'bookmark_id': 'id1',
+            'name': 'name',
+            'url': 'http://test.com',
+            'date_created': datetime.datetime.utcnow(),
+        }
         self.usecase.get_bookmark_details.return_value = response
         self.controller.handle(self.request)
         self.presenter.present.assert_called_with(response)
