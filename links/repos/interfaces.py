@@ -4,6 +4,7 @@ import abc
 
 
 class BookmarkRepo(metaclass=abc.ABCMeta):
+
     @abc.abstractmethod
     def save(self, bookmark):
         pass
@@ -18,6 +19,7 @@ class BookmarkRepo(metaclass=abc.ABCMeta):
 
 
 class UserRepo(metaclass=abc.ABCMeta):
+
     @abc.abstractmethod
     def save(self, user):
         pass

@@ -90,6 +90,8 @@ class CouchDBBookmarkRepo(CouchDBMixin, BookmarkRepo):
     def save(self, bookmark):
         """
         """
+        if bookmark.id is None:
+            return
         try:
             doc = self.db[bookmark.id]
             doc['name'] = bookmark.name

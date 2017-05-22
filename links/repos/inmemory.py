@@ -13,6 +13,8 @@ class MemoryBookmarkRepo(BookmarkRepo):
         self._data = []
 
     def save(self, bookmark):
+        if bookmark.id is None:
+            return
         data = {
             'id': bookmark.id,
             'user_id': bookmark.user_id,

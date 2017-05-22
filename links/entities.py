@@ -36,6 +36,9 @@ class Bookmark:
             .format(**output)
         )
 
+    def belongs_to(self, user_id):
+        return self.user_id == user_id
+
 
 class NullBookmark(Bookmark):
     """Return a null entity when nothing was found"""
@@ -47,6 +50,9 @@ class NullBookmark(Bookmark):
 
     def __repr__(self):
         return "NullBookmark()"
+
+    def belongs_to(self, user_id):
+        return False
 
 
 class User:
