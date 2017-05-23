@@ -1,5 +1,6 @@
 import abc
 from datetime import datetime
+from links.formatting import slugify
 
 
 class Entity(metaclass=abc.ABCMeta):
@@ -39,6 +40,18 @@ class Bookmark:
     def belongs_to(self, user_id):
         return self.user_id == user_id
 
+    def as_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'name': self.name,
+            'url': self.url,
+            'date_created': self.date_created,
+        }
+
+    def slug(self):
+        return slugify(self.name)
+
 
 class NullBookmark(Bookmark):
     """Return a null entity when nothing was found"""
@@ -53,6 +66,9 @@ class NullBookmark(Bookmark):
 
     def belongs_to(self, user_id):
         return False
+
+    def slug(self):
+        return ''
 
 
 class User:

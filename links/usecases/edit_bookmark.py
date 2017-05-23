@@ -1,12 +1,7 @@
 import abc
-import datetime
-import uuid
-from collections import namedtuple
 
 from links import validation
 from links.context import context
-from links.entities import Bookmark
-from links.exceptions import UserNotFound
 from links.logger import get_logger
 from links.usecases.interfaces import Controller, OutputBoundary
 

@@ -1,7 +1,6 @@
 import abc
 import datetime
 import uuid
-from collections import namedtuple
 
 from links import validation
 from links.context import context
@@ -11,11 +10,6 @@ from links.logger import get_logger
 from links.usecases.interfaces import Controller, OutputBoundary
 
 LOGGER = get_logger(__name__)
-
-CreateBookmarkResponse = namedtuple(
-    'CreateBookmarkResponse',
-    ['bookmark_id', 'errors']
-)
 
 
 class CreateBookmarkInputBoundary(metaclass=abc.ABCMeta):
@@ -54,14 +48,14 @@ class CreateBookmarkUseCase(CreateBookmarkInputBoundary):
             date_created = datetime.datetime.utcnow()
 
         if errors:
-            response = CreateBookmarkResponse(bookmark_id=None, errors=errors)
+            response = {'bookmark_id': None, 'errors': errors}
             return response
 
         if context.user_repo.exists(user_id):
             bookmark_id = uuid.uuid4().hex
             bookmark = Bookmark(bookmark_id, user_id, name, url, date_created=date_created)
             context.bookmark_repo.save(bookmark)
-            response = CreateBookmarkResponse(bookmark_id=bookmark_id, errors=errors)
+            response = {'bookmark_id': bookmark_id}
             return response
 
 
@@ -71,9 +65,9 @@ class CreateBookmarkPresenter(OutputBoundary):
         self.view_model = {}
 
     def present(self, response_model):
-        self.view_model['bookmark_id'] = response_model.bookmark_id
+        self.view_model['bookmark_id'] = response_model['bookmark_id']
         self.view_model['errors'] = {
-            key: val for key, val in response_model.errors.items()
+            key: val for key, val in response_model['errors'].items()
         }
 
     def get_view_model(self):
@@ -81,6 +75,7 @@ class CreateBookmarkPresenter(OutputBoundary):
 
 
 class CreateBookmarkController(Controller):
+
     def __init__(self, usecase, presenter, view):
         self.usecase = usecase
         self.presenter = presenter

@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod
 from links.context import context
 from links.logger import get_logger
 from links.usecases.interfaces import OutputBoundary, Controller
-from links.usecases.bookmark_details import BookmarkDetails, format_bookmark_details
+from links.usecases.bookmark_details import format_bookmark_details
 from links.settings import Settings
 from links import exceptions
 
@@ -38,11 +38,7 @@ class ListBookmarksUseCase(ListBookmarksInputBoundary):
             LOGGER.exception(ex)
             raise exceptions.RepositoryError("Data access error")
 
-        response = [
-            BookmarkDetails(bm.id, bm.name, bm.url, bm.date_created)
-            for bm in bookmarks
-            if bm.user_id == user_id
-        ]
+        response = [bm.as_dict() for bm in bookmarks if bm.belongs_to(user_id)]
         return response
 
 

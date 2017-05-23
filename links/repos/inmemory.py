@@ -15,14 +15,7 @@ class MemoryBookmarkRepo(BookmarkRepo):
     def save(self, bookmark):
         if bookmark.id is None:
             return
-        data = {
-            'id': bookmark.id,
-            'user_id': bookmark.user_id,
-            'name': bookmark.name,
-            'url': bookmark.url,
-            'date_created': bookmark.date_created,
-        }
-        self._data.append(data)
+        self._data.append(bookmark.as_dict())
 
     def get(self, bookmark_id):
         docs = [x for x in self._data if x['id'] == bookmark_id]

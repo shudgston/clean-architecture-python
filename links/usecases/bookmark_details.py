@@ -1,5 +1,4 @@
 from abc import ABCMeta, abstractmethod
-from collections import namedtuple
 from links.usecases.interfaces import Controller, OutputBoundary
 from links.context import context
 from links.logger import get_logger
@@ -9,25 +8,20 @@ from links.exceptions import BookmarkNotFound
 LOGGER = get_logger(__name__)
 
 
-BookmarkDetails = namedtuple(
-    'BookmarkDetails',
-    ['bookmark_id', 'name', 'url', 'date_created']
-)
-
-
 def format_bookmark_details(bookmark):
     """
 
-    :param bookmark: bookmark details namedtuple
+    :param bookmark: bookmark details dict
     :return: dict
     """
     return {
-        'bookmark_id': bookmark.bookmark_id,
-        'name': bookmark.name,
-        'url': bookmark.url,
-        'date_created': formatting.display_date(bookmark.date_created),
-        'date_created_iso': formatting.iso_date(bookmark.date_created),
-        'host': formatting.host_from_url(bookmark.url)
+        'bookmark_id': bookmark['id'],
+        'name': bookmark['name'],
+        'url': bookmark['url'],
+        'date_created': formatting.display_date(bookmark['date_created']),
+        'date_created_iso': formatting.iso_date(bookmark['date_created']),
+        'host': formatting.host_from_url(bookmark['url']),
+        'slug': formatting.slugify(bookmark['name']),
     }
 
 
@@ -50,15 +44,8 @@ class BookmarkDetailsUseCase(InputBoundary):
         """
         bookmark = context.bookmark_repo.get(bookmark_id)
 
-        # if bookmark.user_id == user_id:
         if bookmark.belongs_to(user_id):
-            response = BookmarkDetails(
-                bookmark.id,
-                bookmark.name,
-                bookmark.url,
-                bookmark.date_created
-            )
-            return response
+            return bookmark.as_dict()
 
         raise BookmarkNotFound
 
