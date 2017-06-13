@@ -67,7 +67,6 @@ class ListBookmarksPresenterTest(TestCase):
                 'date_created': 'Jan 1, 2017',
                 'date_created_iso': '2017-01-01T00:00:00',
                 'host': 'test.com',
-                'slug': 'test1',
             }
             self.assertEqual(2, len(presenter.get_view_model()))
             self.assertDictEqual(expected, presenter.get_view_model()[0])

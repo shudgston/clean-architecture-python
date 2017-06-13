@@ -69,7 +69,6 @@ class BookmarkDetailsPresenterTest(TestCase):
             'date_created': 'Jan 1, 2017',
             'date_created_iso': '2017-01-01T00:00:00',
             'host': 'test.com',
-            'slug': 'name',
         }
         self.assertEqual(view_model, presenter.get_view_model())
 

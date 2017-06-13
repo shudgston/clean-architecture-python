@@ -1,5 +1,3 @@
-import re
-import unicodedata
 from datetime import datetime
 from urllib.parse import urlparse
 
@@ -22,12 +20,3 @@ def host_from_url(url):
     except AssertionError:
         host = ''
     return host
-
-
-def slugify(text):
-    """
-    """
-    s = unicodedata.normalize('NFKC', text.strip())
-    s = re.sub(r'[^\w\s-]', '', s)
-    # limit final length
-    return re.sub(r'[-\s]+', '-', s).lower()[:200]

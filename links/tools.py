@@ -9,6 +9,7 @@ import sys
 from links.usecases.interfaces import View
 from links.usecases import create_bookmark
 from links.usecases.create_user import CreateUserUseCase, CreateUserController, CreateUserPresenter
+from links.usecases import list_bookmarks
 from links.logger import get_logger
 from links.context import init_context
 
@@ -30,6 +31,12 @@ class CreateUserConsoleView(View):
         return ufailure.format(view_model['username'])
 
 
+class ListBookmarksConsoleView(View):
+
+    def generate_view(self, view_model):
+        return json.dumps(view_model, indent=True)
+
+
 def create_user(args):
     controller = CreateUserController(
         CreateUserUseCase(),
@@ -39,13 +46,23 @@ def create_user(args):
     print(controller.handle({'username': args.username, 'password': args.password}))
 
 
+def export_bookmarks(args):
+    controller = list_bookmarks.ListBookmarksController(
+        list_bookmarks.ListBookmarksUseCase(),
+        list_bookmarks.ListBookmarksPresenter(),
+        ListBookmarksConsoleView()
+    )
+    # rv = uc.list_bookmarks(args.user, filterkey='everything')
+    # print(rv)
+    print(controller.handle({'user_id': args.user, 'filterkey': 'everything'}))
+
+
 def import_bookmarks(args):
     LOGGER.info("Creating temp user %s", args.user)
     rv = CreateUserUseCase().create_user(args.user, 'password')
     LOGGER.info(rv)
 
-    data = import_from_json(args.source)
-    for x in data['bookmarks']:
+    for x in import_from_json(args.source):
         date_created = dateutil.parser.parse(x['date_created_iso'])
         uc = create_bookmark.CreateBookmarkUseCase()
         rv = uc.create_bookmark(args.user, x['name'], x['url'], date_created)
@@ -73,6 +90,15 @@ def main():
 
     parser_user_parent = argparse.ArgumentParser()
     subparsers = parser.add_subparsers()
+
+    parser_export_links = subparsers.add_parser(
+        'export',
+        description='Export as JSON'
+    )
+    parser_export_links.add_argument(
+        '-u', '--user', type=str, required=True
+    )
+    parser_export_links.set_defaults(func=export_bookmarks)
 
     parser_import_links = subparsers.add_parser(
         'import',

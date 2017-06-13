@@ -1,5 +1,7 @@
 import abc
 import datetime
+import re
+import unicodedata
 import uuid
 
 from links import validation
@@ -10,6 +12,17 @@ from links.logger import get_logger
 from links.usecases.interfaces import Controller, OutputBoundary
 
 LOGGER = get_logger(__name__)
+
+
+def create_bookmark_slug(text):
+    """
+    """
+    assert isinstance(text, str)
+    s = unicodedata.normalize('NFKC', text.strip())
+    s = re.sub(r'[^\w\s-]', '', s)
+    # limit final length
+    s = re.sub(r'[-\s]+', '-', s).lower()[:200]
+    return '{}-{}'.format(uuid.uuid4().hex[:8], s)
 
 
 class CreateBookmarkInputBoundary(metaclass=abc.ABCMeta):
@@ -47,15 +60,17 @@ class CreateBookmarkUseCase(CreateBookmarkInputBoundary):
         if date_created is None:
             date_created = datetime.datetime.utcnow()
 
+        response = {'bookmark_id': None, 'errors': errors}
+
         if errors:
-            response = {'bookmark_id': None, 'errors': errors}
             return response
 
         if context.user_repo.exists(user_id):
-            bookmark_id = uuid.uuid4().hex
+            # bookmark_id = uuid.uuid4().hex
+            bookmark_id = create_bookmark_slug(name)
             bookmark = Bookmark(bookmark_id, user_id, name, url, date_created=date_created)
             context.bookmark_repo.save(bookmark)
-            response = {'bookmark_id': bookmark_id}
+            response['bookmark_id'] = bookmark_id
             return response
 
 

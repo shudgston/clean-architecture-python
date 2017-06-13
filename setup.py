@@ -1,8 +1,10 @@
 from setuptools import find_packages, setup
 
+from links import __version__
+
 setup(
     name='clean-architecture-python',
-    version='0.0.1',
+    version=__version__,
     packages=find_packages(exclude=['tests*']),
     package_dir={'links': 'links'},
     url='https://github.com/shudgston/clean-architecture-python',

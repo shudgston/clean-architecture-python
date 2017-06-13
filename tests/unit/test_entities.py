@@ -19,10 +19,10 @@ class UserEntityTest(unittest.TestCase):
 class BookmarkEntityTest(unittest.TestCase):
 
     def test_constructor(self):
-        bm = Bookmark('id123', 'user', 'name', 'http://example.com')
+        bm = Bookmark('id123', 'user', 'this is a test', 'http://example.com')
         self.assertEqual(bm.id, 'id123')
         self.assertEqual(bm.user_id, 'user')
-        self.assertEqual(bm.name, 'name')
+        self.assertEqual(bm.name, 'this is a test')
         self.assertEqual(bm.url, 'http://example.com')
         self.assertTrue(isinstance(bm.date_created, datetime.datetime))
 
@@ -33,10 +33,6 @@ class BookmarkEntityTest(unittest.TestCase):
         self.assertFalse(bm.belongs_to(1))
         self.assertFalse(bm.belongs_to(None))
 
-    def test_slug(self):
-        bm = Bookmark('id123', 'user', 'some url title', 'http://example.com')
-        self.assertEqual('some-url-title', bm.slug())
-
 
 class NullBookmarkTest(unittest.TestCase):
 
@@ -44,8 +40,8 @@ class NullBookmarkTest(unittest.TestCase):
         bm = NullBookmark()
         self.assertIs(bm.id, None)
         self.assertIs(bm.user_id, None)
-        self.assertIs(bm.name, None)
-        self.assertIs(bm.url, None)
+        self.assertIs(bm.name, '')
+        self.assertIs(bm.url, '')
         self.assertIs(bm.date_created, None)
 
     def test_belongs_to(self):
@@ -54,7 +50,3 @@ class NullBookmarkTest(unittest.TestCase):
         self.assertFalse(bm.belongs_to('another user'))
         self.assertFalse(bm.belongs_to(1))
         self.assertFalse(bm.belongs_to(None))
-
-    def test_slug(self):
-        bm = NullBookmark()
-        self.assertEqual('', bm.slug())

@@ -7,6 +7,16 @@ from links.usecases import create_bookmark
 from .base import UseCaseTest
 
 
+class CreateBookmarkSlugTest(TestCase):
+
+    def test_slug_format(self):
+        slug = create_bookmark.create_bookmark_slug('test title')
+        parts = slug.split('-')
+        self.assertEqual(8, len(parts[0]))
+        self.assertEqual('test', parts[1])
+        self.assertEqual('title', parts[2])
+
+
 class CreateBookmarkUseCaseTest(UseCaseTest):
 
     def setUp(self):
@@ -20,8 +30,17 @@ class CreateBookmarkUseCaseTest(UseCaseTest):
             self.uc.create_bookmark('unknown', 'test', 'http://test.com')
 
     def test_user_can_create_bookmark(self):
-        rv = self.uc.create_bookmark(self.user.id, 'test', 'http://test.com')
-        self.assertTrue(isinstance(rv['bookmark_id'], str))
+        rv = self.uc.create_bookmark(self.user.id, 'test name', 'http://test.com')
+        self.assertIn('bookmark_id', rv)
+        self.assertIn('errors', rv)
+        self.assertIn('test-name', rv['bookmark_id'])
+        self.assertEqual({}, rv['errors'])
+
+        saved = context.bookmark_repo.get(rv['bookmark_id'])
+        self.assertIn('test-name', saved.id)
+        self.assertEqual(self.user.id, saved.user_id)
+        self.assertEqual('test name', saved.name)
+        self.assertEqual('http://test.com', saved.url)
 
     def test_invalid_values_are_caught(self):
         rv = self.uc.create_bookmark(self.user.id, 'test', 'gobbledigook')

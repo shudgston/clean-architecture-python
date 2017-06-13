@@ -5,7 +5,7 @@ import os
 
 
 class Settings:
-    BOOKMARK_LIST_FILTERS = {'everything': 1000, 'recent': 25}
+    BOOKMARK_LIST_FILTERS = {'everything': 10000, 'recent': 25}
     DATABASE_PLUGIN = os.environ.get('LINKS_DATABASE_PLUGIN')
     LOGGING_LEVEL = int(os.environ.get('LINKS_LOGGING_LEVEL', 20))  # info
 

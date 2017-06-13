@@ -21,7 +21,6 @@ def format_bookmark_details(bookmark):
         'date_created': formatting.display_date(bookmark['date_created']),
         'date_created_iso': formatting.iso_date(bookmark['date_created']),
         'host': formatting.host_from_url(bookmark['url']),
-        'slug': formatting.slugify(bookmark['name']),
     }
 
 
