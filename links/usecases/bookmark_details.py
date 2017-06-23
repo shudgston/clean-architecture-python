@@ -1,9 +1,10 @@
 from abc import ABCMeta, abstractmethod
-from links.usecases.interfaces import Controller, OutputBoundary
-from links.context import context
-from links.logger import get_logger
+
 from links import formatting
+from links.context import context
 from links.exceptions import BookmarkNotFound
+from links.logger import get_logger
+from links.usecases.interfaces import Controller, OutputBoundary
 
 LOGGER = get_logger(__name__)
 
@@ -24,17 +25,17 @@ def format_bookmark_details(bookmark):
     }
 
 
-class InputBoundary(metaclass=ABCMeta):
+class BookmarkDetailsInputBoundary(metaclass=ABCMeta):
 
     @abstractmethod
-    def get_bookmark_details(self, user_id, bookmark_id):
+    def get_bookmark_details(self, user_id, bookmark_id, presenter):
         pass
 
 
-class BookmarkDetailsUseCase(InputBoundary):
+class BookmarkDetailsUseCase(BookmarkDetailsInputBoundary):
     """Fetch a bookmarks details"""
 
-    def get_bookmark_details(self, user_id, bookmark_id):
+    def get_bookmark_details(self, user_id, bookmark_id, presenter):
         """
 
         :param user_id:
@@ -44,9 +45,10 @@ class BookmarkDetailsUseCase(InputBoundary):
         bookmark = context.bookmark_repo.get(bookmark_id)
 
         if bookmark.belongs_to(user_id):
-            return bookmark.as_dict()
-
-        raise BookmarkNotFound
+            # return bookmark.as_dict()
+            presenter.present(bookmark.as_dict())
+        else:
+            raise BookmarkNotFound
 
 
 class BookmarkDetailsPresenter(OutputBoundary):
@@ -69,7 +71,9 @@ class BookmarkDetailsController(Controller):
         self.view = view
 
     def handle(self, request):
-        resp = self.usecase.get_bookmark_details(request['user_id'], request['bookmark_id'])
-        self.presenter.present(resp)
-        vm = self.presenter.get_view_model()
-        return self.view.generate_view(vm)
+        self.usecase.get_bookmark_details(
+            request['user_id'],
+            request['bookmark_id'],
+            self.presenter
+        )
+        return self.view.generate_view(self.presenter.get_view_model())

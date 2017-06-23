@@ -1,13 +1,31 @@
+import re
 from urllib.parse import urlparse
 from _collections import defaultdict
 
 
 def is_url(url):
+    """
+
+    :param url:
+    :return:
+    """
     parsed = urlparse(url)
     if parsed.scheme and parsed.netloc:
         if parsed.scheme in ['http', 'https']:
             return True
     return False
+
+
+def is_valid_username(name):
+    """
+
+    :param name:
+    :return:
+    """
+    if re.match(r'^[A-Za-z][A-Za-z0-9_.]*$', name) is None:
+        return False
+
+    return True
 
 
 def validate(request, schema):

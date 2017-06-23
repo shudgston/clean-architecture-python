@@ -16,6 +16,22 @@ class IsURLTest(unittest.TestCase):
         self.assertFalse(validation.is_url('example.com'))
 
 
+class IsValidUserNameTest(unittest.TestCase):
+
+    def test_username_is_valid(self):
+        self.assertTrue(validation.is_valid_username('s1'))
+        self.assertTrue(validation.is_valid_username('h0d0r'))
+        self.assertTrue(validation.is_valid_username('hodor_123'))
+        self.assertTrue(validation.is_valid_username('hodor123_hodor_123'))
+
+    def test_username_is_invalid(self):
+        self.assertFalse(validation.is_valid_username('_hodor'))
+        self.assertFalse(validation.is_valid_username('1hodor'))
+        self.assertFalse(validation.is_valid_username('___'))
+        self.assertFalse(validation.is_valid_username('hodor!'))
+        self.assertFalse(validation.is_valid_username('h0d@r'))
+
+
 class ValidationSchemaTest(unittest.TestCase):
 
     def test_required_value_present(self):

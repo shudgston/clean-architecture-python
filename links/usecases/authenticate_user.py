@@ -8,19 +8,20 @@ from links.usecases.interfaces import OutputBoundary, Controller
 LOGGER = get_logger(__name__)
 
 
-class AuthenticateUseInputBoundary(metaclass=ABCMeta):
+class AuthenticateUserInputBoundary(metaclass=ABCMeta):
 
     @abstractmethod
-    def authenticate_user(self, user_id, password):
+    def authenticate_user(self, user_id, password, presenter):
         pass
 
 
-class AuthenticateUserUseCase(AuthenticateUseInputBoundary):
+class AuthenticateUserUseCase(AuthenticateUserInputBoundary):
 
-    def authenticate_user(self, user_id, password):
+    def authenticate_user(self, user_id, password, presenter):
         """
         :param user_id:
         :param password:
+        :param presenter:
         :return:
         """
         response = {'is_authenticated': False, 'user_id': user_id}
@@ -29,10 +30,8 @@ class AuthenticateUserUseCase(AuthenticateUseInputBoundary):
         if context.user_repo.exists(user_id):
             if check_password(password, password_hash):
                 response['is_authenticated'] = True
-                return response
 
-        response['is_authenticated'] = False
-        return response
+        presenter.present(response)
 
 
 class AuthenticateUserPresenter(OutputBoundary):
@@ -55,7 +54,9 @@ class AuthenticateUserController(Controller):
         self.view = view
 
     def handle(self, request):
-        resp = self.usecase.authenticate_user(request['username'], request['password'])
-        self.presenter.present(resp)
-        vm = self.presenter.get_view_model()
-        return self.view.generate_view(vm)
+        self.usecase.authenticate_user(
+            request['username'],
+            request['password'],
+            self.presenter
+        )
+        return self.view.generate_view(self.presenter.get_view_model())

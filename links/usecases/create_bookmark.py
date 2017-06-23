@@ -28,12 +28,12 @@ def create_bookmark_slug(text):
 class CreateBookmarkInputBoundary(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
-    def create_bookmark(self, user_id, name, url, date_created=None):
+    def create_bookmark(self, user_id, name, url, presenter):
         pass
 
 
 class CreateBookmarkUseCase(CreateBookmarkInputBoundary):
-    """Creates a new bookmark"""
+    """The 'create a new bookmark' use case"""
 
     _validation_schema = {
         'user_id': validation.Schema(required=True),
@@ -43,35 +43,31 @@ class CreateBookmarkUseCase(CreateBookmarkInputBoundary):
             custom=[(validation.is_url, "Not a valid URL")])
     }
 
-    def create_bookmark(self, user_id, name, url, date_created=None):
+    def create_bookmark(self, user_id, name, url, presenter):
         """
-
         :param user_id:
         :param name:
         :param url:
+        :param presenter:
         :return:
         """
         if not context.user_repo.exists(user_id):
             raise UserNotFound(user_id)
 
+        response = {'bookmark_id': None, 'errors': {}}
         unclean_data = {'user_id': user_id, 'name': name, 'url': url}
         is_valid, errors = validation.validate(unclean_data, self._validation_schema)
 
-        if date_created is None:
-            date_created = datetime.datetime.utcnow()
-
-        response = {'bookmark_id': None, 'errors': errors}
-
         if errors:
-            return response
-
-        if context.user_repo.exists(user_id):
-            # bookmark_id = uuid.uuid4().hex
+            response['errors'] = errors
+        elif context.user_repo.exists(user_id):
             bookmark_id = create_bookmark_slug(name)
+            date_created = datetime.datetime.utcnow()
             bookmark = Bookmark(bookmark_id, user_id, name, url, date_created=date_created)
             context.bookmark_repo.save(bookmark)
             response['bookmark_id'] = bookmark_id
-            return response
+
+        presenter.present(response)
 
 
 class CreateBookmarkPresenter(OutputBoundary):
@@ -97,7 +93,10 @@ class CreateBookmarkController(Controller):
         self.view = view
 
     def handle(self, request):
-        resp = self.usecase.create_bookmark(request['user_id'], request['name'], request['url'])
-        self.presenter.present(resp)
-        vm = self.presenter.get_view_model()
-        return self.view.generate_view(vm)
+        self.usecase.create_bookmark(
+            request['user_id'],
+            request['name'],
+            request['url'],
+            self.presenter
+        )
+        return self.view.generate_view(self.presenter.get_view_model())

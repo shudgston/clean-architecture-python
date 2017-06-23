@@ -22,13 +22,15 @@ class CreateUserConsoleView(View):
 
     def generate_view(self, view_model):
         super().generate_view(view_model)
-        usuccess = "\n\u2713 Created user '{}'"
-        ufailure = "\n\u2717 Failed to create user '{}'"
+        success_template = "\n{} Created user '{}'"
+        failure_template = "\n{} Failed to create user '{}'.\nErrors:\n{}"
 
         if view_model['user_created']:
-            return usuccess.format(view_model['username'])
+            return success_template.format(USUCCESS, view_model['username'])
 
-        return ufailure.format(view_model['username'])
+        errors = [e for e in view_model['errors']['username']]
+        return failure_template.format(
+            UFAILURE, view_model['username'], '\n'.join(errors))
 
 
 class ListBookmarksConsoleView(View):

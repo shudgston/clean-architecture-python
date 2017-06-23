@@ -1,5 +1,7 @@
 from abc import ABCMeta, abstractmethod
 
+# TODO: Make a single InputBoundary ABC
+
 
 class OutputBoundary(metaclass=ABCMeta):
     """
@@ -17,6 +19,7 @@ class OutputBoundary(metaclass=ABCMeta):
 
     @abstractmethod
     def get_view_model(self):
+        # TODO: remove this and just use the attribute?
         pass
 
 
