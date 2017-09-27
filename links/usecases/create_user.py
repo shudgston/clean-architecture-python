@@ -4,20 +4,19 @@ from links.context import context
 from links.entities import User
 from links.logger import get_logger
 from links.security import create_password_hash
-from links.usecases.interfaces import OutputBoundary, Controller
+from links.usecases.interfaces import Controller, IPresenter, IUseCase
 from links import validation
 
 LOGGER = get_logger(__name__)
 
 
-class CreateUserInputBoundary(metaclass=abc.ABCMeta):
+def _create_test_user():
+    usecase = CreateUserUseCase()
+    req = {'username': 'hodor', 'password': 'hodor'}
+    usecase.execute(req, CreateUserPresenter())
 
-    @abc.abstractmethod
-    def create_user(self, username, password, presenter):
-        pass
 
-
-class CreateUserUseCase(CreateUserInputBoundary):
+class CreateUserUseCase(IUseCase):
 
     _validation_schema = {
         'username': validation.Schema(
@@ -27,13 +26,15 @@ class CreateUserUseCase(CreateUserInputBoundary):
         )
     }
 
-    def create_user(self, username, password, presenter):
+    def execute(self, request, presenter):
         """
 
-        :param username:
-        :param password:
+        :param request:
+        :param presenter:
         :return:
         """
+        username = request['username']
+        password = request['password']
         response = {'user_created': False, 'username': username, 'errors': {}}
 
         is_valid, errors = validation.validate(
@@ -55,7 +56,7 @@ class CreateUserUseCase(CreateUserInputBoundary):
         presenter.present(response)
 
 
-class CreateUserPresenter(OutputBoundary):
+class CreateUserPresenter(IPresenter):
 
     def __init__(self):
         self.view_model = False
@@ -76,5 +77,9 @@ class CreateUserController(Controller):
         self.view = view
 
     def handle(self, request):
-        self.usecase.create_user(request['username'], request['password'], self.presenter)
+        data = {
+            'username': request['username'],
+            'password': request['password'],
+        }
+        self.usecase.execute(data, self.presenter)
         return self.view.generate_view(self.presenter.get_view_model())

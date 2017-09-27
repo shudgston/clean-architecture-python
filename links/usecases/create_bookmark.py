@@ -1,4 +1,3 @@
-import abc
 import datetime
 import re
 import unicodedata
@@ -7,11 +6,13 @@ import uuid
 from links import validation
 from links.context import context
 from links.entities import Bookmark
-from links.exceptions import UserNotFound
+from links.exceptions import UserNotFound, ValidationError, InvalidOperationError
 from links.logger import get_logger
-from links.usecases.interfaces import Controller, OutputBoundary
+from links.usecases.interfaces import Controller, IPresenter, UseCase
 
 LOGGER = get_logger(__name__)
+
+NAME_LENGTH_LIMIT = 400
 
 
 def create_bookmark_slug(text):
@@ -25,64 +26,69 @@ def create_bookmark_slug(text):
     return '{}-{}'.format(uuid.uuid4().hex[:8], s)
 
 
-class CreateBookmarkInputBoundary(metaclass=abc.ABCMeta):
-
-    @abc.abstractmethod
-    def create_bookmark(self, user_id, name, url, presenter):
-        pass
-
-
-class CreateBookmarkUseCase(CreateBookmarkInputBoundary):
+class CreateBookmarkUseCase(UseCase):
     """The 'create a new bookmark' use case"""
 
-    _validation_schema = {
-        'user_id': validation.Schema(required=True),
-        'name': validation.Schema(required=True, maxlength=400),
-        'url': validation.Schema(
-            required=True,
-            custom=[(validation.is_url, "Not a valid URL")])
-    }
+    def __init__(self):
+        self.user_id = None
+        self.name = None
+        self.url = None
 
-    def create_bookmark(self, user_id, name, url, presenter):
-        """
-        :param user_id:
-        :param name:
-        :param url:
-        :param presenter:
-        :return:
-        """
-        if not context.user_repo.exists(user_id):
-            raise UserNotFound(user_id)
+    def execute(self, presenter):
 
-        response = {'bookmark_id': None, 'errors': {}}
-        unclean_data = {'user_id': user_id, 'name': name, 'url': url}
-        is_valid, errors = validation.validate(unclean_data, self._validation_schema)
+        if not context.user_repo.exists(self.user_id):
+            LOGGER.error("Unknown user '%s'", self.user_id)
+            raise InvalidOperationError("No such user")
 
+        errors = self._validate()
         if errors:
-            response['errors'] = errors
-        elif context.user_repo.exists(user_id):
-            bookmark_id = create_bookmark_slug(name)
-            date_created = datetime.datetime.utcnow()
-            bookmark = Bookmark(bookmark_id, user_id, name, url, date_created=date_created)
+            presenter.present(Response(errors=errors))
+        else:
+            bookmark_id = create_bookmark_slug(self.name)
+            bookmark = Bookmark(
+                bookmark_id,
+                self.user_id,
+                self.name,
+                self.url,
+                date_created=datetime.datetime.utcnow()
+            )
             context.bookmark_repo.save(bookmark)
-            response['bookmark_id'] = bookmark_id
+            presenter.present(Response())
 
-        presenter.present(response)
+    def _validate(self):
+        errors = {}
+        if self.name is None or len(self.name) > NAME_LENGTH_LIMIT:
+            errors['name'] = 'Name is too long'
+
+        if not validation.is_url(self.url):
+            errors['url'] = 'Invalid URL'
+
+        return errors
 
 
-class CreateBookmarkPresenter(OutputBoundary):
+class CreateBookmarkPresenter(IPresenter):
 
     def __init__(self):
-        self.view_model = {}
-
-    def present(self, response_model):
-        self.view_model['bookmark_id'] = response_model['bookmark_id']
-        self.view_model['errors'] = {
-            key: val for key, val in response_model['errors'].items()
+        self.view_model = {
+            'success': False,
+            'errors': {},
         }
+
+    def present(self, response):
+        self.view_model['errors'] = response.errors
+        self.view_model['success'] = response.errors == {}
 
     def get_view_model(self):
         return self.view_model
+
+
+class Response:
+
+    def __init__(self, errors=None):
+        if errors is None:
+            errors = {}
+        self.errors = errors
+
 
 
 class CreateBookmarkController(Controller):
@@ -93,10 +99,8 @@ class CreateBookmarkController(Controller):
         self.view = view
 
     def handle(self, request):
-        self.usecase.create_bookmark(
-            request['user_id'],
-            request['name'],
-            request['url'],
-            self.presenter
-        )
+        self.usecase.user_id = request['user_id']
+        self.usecase.name = request['name']
+        self.usecase.url = request['url']
+        self.usecase.execute(self.presenter)
         return self.view.generate_view(self.presenter.get_view_model())

@@ -21,3 +21,11 @@ class UserNotFound(LinksError):
 
 class BookmarkNotFound(LinksError):
     pass
+
+
+class ValidationError(LinksError):
+    pass
+
+
+class InvalidOperationError(LinksError):
+    pass

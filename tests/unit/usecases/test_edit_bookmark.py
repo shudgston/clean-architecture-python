@@ -1,9 +1,9 @@
-from unittest import TestCase, mock
+from unittest import TestCase
 
+from links.exceptions import InvalidOperationError
 from links.context import context
 from links.entities import Bookmark, User
-from links.usecases.edit_bookmark import EditBookmarkUseCase, EditBookmarkPresenter, \
-    EditBookmarkController
+from links.usecases import edit_bookmark
 from tests.unit.usecases.base import UseCaseTest, PresenterSpy, ControllerTestMixin
 
 
@@ -11,95 +11,136 @@ class EditBookmarkUseCaseTest(UseCaseTest):
 
     def setUp(self):
         super().setUp()
+        self.presenter_spy = PresenterSpy()
+        context.user_repo._data = []
+        context.bookmark_repo._data = []
+
         self.user = User('user')
         context.user_repo.save(self.user)
 
         self.bookmark = Bookmark('id1', self.user.id, 'name', 'http://test.com')
         context.bookmark_repo.save(self.bookmark)
 
-        self.uc = EditBookmarkUseCase()
-        self.presenter_spy = PresenterSpy()
-
     def test_user_can_edit_bookmark(self):
-        self.uc.edit_bookmark(
-            self.user.id,
-            self.bookmark.id,
-            'name changed',
-            'http://test.com',
-            self.presenter_spy
-        )
-        self.assertEqual(
-            {
-                'bookmark_id': self.bookmark.id,
-                'errors': None
-            },
-            self.presenter_spy.response_model
-        )
+        uc = edit_bookmark.EditBookmarkUseCase()
+        uc.user_id = self.user.id
+        uc.bookmark_id = self.bookmark.id
+        uc.name = 'name changed failing test'
+        uc.url = 'http://test.com'
+        uc.execute(self.presenter_spy)
+
+        self.assertEqual(uc.user_id, 'user')
+        self.assertTrue(self.presenter_spy.present_called)
+        self.assertEqual(self.presenter_spy.response_model.errors, {})
 
     def test_user_cannot_edit_another_users_bookmark(self):
-        self.uc.edit_bookmark(
-            'other_user',
-            self.bookmark.id,
-            'name changed',
-            'http://test.com',
-            self.presenter_spy
-        )
+        other_user = User('other_user')
+        context.user_repo.save(other_user)
+
+        uc = edit_bookmark.EditBookmarkUseCase()
+        uc.user_id = other_user.id
+        uc.bookmark_id = self.bookmark.id
+        uc.name = 'name changed'
+        uc.url = 'http://test.com'
+        uc.execute(self.presenter_spy)
+
+        self.assertTrue(self.presenter_spy.present_called)
         self.assertEqual(
-            {
-                'bookmark_id': self.bookmark.id,
-                'errors': {'message': 'Insufficient Permissions'}
-            },
-            self.presenter_spy.response_model
+            self.presenter_spy.response_model.errors['error'],
+            'Forbidden'
         )
 
     def test_unknown_user_cannot_edit_bookmark(self):
-        self.uc.edit_bookmark(
-            'unknown',
-            'id1',
-            'test',
-            'http://test.com',
-            self.presenter_spy
-        )
-        self.assertEqual(
-            {
-                'bookmark_id': 'id1',
-                'errors': {'message': 'Insufficient Permissions'}
-            },
-            self.presenter_spy.response_model
-        )
+        uc = edit_bookmark.EditBookmarkUseCase()
+        uc.user_id = 'unknown_user'
+        uc.bookmark_id = self.bookmark.id
+        uc.name = 'test'
+        uc.url = 'http://test.com'
+
+        with self.assertRaises(InvalidOperationError):
+           uc.execute(self.presenter_spy)
 
     def test_invalid_values_are_caught(self):
-        self.uc.edit_bookmark(
-            self.user.id,
-            self.bookmark.id,
-            'test',
-            'gobbledigook',
-            self.presenter_spy)
-        self.assertDictEqual(
-            {
-                'bookmark_id': self.bookmark.id,
-                'errors': {'url': ['Not a valid URL']}
-            },
-            self.presenter_spy.response_model
+        uc = edit_bookmark.EditBookmarkUseCase()
+        uc.user_id = self.user.id
+        uc.bookmark_id = self.bookmark.id
+        uc.name = 'test'
+        uc.url = 'gobbledigook'
+        uc.execute(self.presenter_spy)
+
+        self.assertEqual(
+            self.presenter_spy.response_model.errors['url'],
+            'Invalid URL'
         )
+
+    def test_validation_error_when_args_not_complete(self):
+        uc = edit_bookmark.EditBookmarkUseCase()
+        uc.bookmark_id = self.bookmark.id
+        uc.user_id = self.user.id
+        uc.execute(self.presenter_spy)
+
+        self.assertTrue(self.presenter_spy.present_called)
+        self.assertEqual(
+            self.presenter_spy.response_model.errors['name'],
+            'Name is too long'
+        )
+        self.assertEqual(
+            self.presenter_spy.response_model.errors['url'],
+            'Invalid URL'
+        )
+
+    def test_error_raised_when_bookmark_id_is_none(self):
+        uc = edit_bookmark.EditBookmarkUseCase()
+        uc.user_id = self.user.id
+        uc.bookmark_id = None
+        uc.name = 'name'
+        uc.url = 'http://test.com'
+
+        with self.assertRaises(InvalidOperationError):
+            uc.execute(self.presenter_spy)
+
+    def test_error_raised_when_user_id_is_none(self):
+        uc = edit_bookmark.EditBookmarkUseCase()
+        uc.user_id = None
+        uc.bookmark_id = self.bookmark.id
+        uc.name = 'name'
+        uc.url = 'http://test.com'
+
+        with self.assertRaises(InvalidOperationError):
+            uc.execute(self.presenter_spy)
 
 
 class EditBookmarkPresentationTest(TestCase):
 
     def test_presenter_creates_view_model(self):
-        response = {'bookmark_id': '1', 'errors': {}}
-        presenter = EditBookmarkPresenter()
+        response = edit_bookmark.Response()
+        presenter = edit_bookmark.EditBookmarkPresenter()
         presenter.present(response)
-        self.assertDictEqual(response, presenter.get_view_model())
+        self.assertDictEqual(
+            presenter.get_view_model(),
+            {
+                'success': True,
+                'errors': {}
+            }
+        )
 
 
 class EditBookmarkControllerTest(ControllerTestMixin, TestCase):
 
     def setUp(self):
         self.mixin_setup()
-        self.controller = EditBookmarkController(self.usecase, self.presenter, self.view)
-        self.request = {'user_id': 'id', 'name': 'name', 'url': 'url'}
+        self.controller = edit_bookmark.EditBookmarkController(
+            self.usecase,
+            self.presenter,
+            self.view
+        )
+        self.request = {
+            'bookmark_id': 'bid',
+            'user_id': 'uid',
+            'name': 'name',
+            'url': 'url'
+        }
 
     def test_usecase_is_called(self):
         self.controller.handle(self.request)
-        self.usecase.edit_bookmark.assert_called_with('id', 'name', 'url', self.presenter)
+        self.usecase.execute.assert_called_with(self.presenter)

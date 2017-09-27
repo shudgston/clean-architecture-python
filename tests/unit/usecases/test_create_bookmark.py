@@ -2,9 +2,9 @@ from unittest import TestCase, mock
 
 from links.context import context
 from links.entities import User
-from links.exceptions import UserNotFound
+from links.exceptions import UserNotFound, InvalidOperationError
 from links.usecases import create_bookmark
-from .base import UseCaseTest, PresenterSpy, ControllerTestMixin
+from tests.unit.usecases.base import UseCaseTest, PresenterSpy, ControllerTestMixin
 
 
 class CreateBookmarkSlugTest(TestCase):
@@ -21,47 +21,67 @@ class CreateBookmarkUseCaseTest(UseCaseTest):
 
     def setUp(self):
         super().setUp()
+        self.presenter_spy = PresenterSpy()
         self.user = User('user')
         context.user_repo.save(self.user)
-        self.uc = create_bookmark.CreateBookmarkUseCase()
-        self.presenter_spy = PresenterSpy()
+
+        self.usecase = create_bookmark.CreateBookmarkUseCase()
+        self.usecase.user_id = self.user.id
+        self.usecase.name = 'test name'
+        self.usecase.url = 'http://test.com'
 
     def test_unknown_user_cannot_create_bookmark(self):
-        with self.assertRaises(UserNotFound):
-            self.uc.create_bookmark('unknown', 'test', 'http://test.com', self.presenter_spy)
+        self.usecase.user_id = 'unknown01234'
+        with self.assertRaises(InvalidOperationError):
+            self.usecase.execute(self.presenter_spy)
 
     def test_user_can_create_bookmark(self):
-        self.uc.create_bookmark(self.user.id, 'test name', 'http://test.com', self.presenter_spy)
-        self.assertIn('bookmark_id', self.presenter_spy.response_model)
-        self.assertIn('errors', self.presenter_spy.response_model)
-        self.assertIn('test-name', self.presenter_spy.response_model['bookmark_id'])
-        self.assertDictEqual({}, self.presenter_spy.response_model['errors'])
+        self.usecase.execute(self.presenter_spy)
+        self.assertDictEqual(self.presenter_spy.response_model.errors, {})
 
-        saved = context.bookmark_repo.get(
-            self.presenter_spy.response_model['bookmark_id']
-        )
-        self.assertIn('test-name', saved.id)
-        self.assertEqual(self.user.id, saved.user_id)
-        self.assertEqual('test name', saved.name)
-        self.assertEqual('http://test.com', saved.url)
+        created = context.bookmark_repo.get_by_user(self.user.id)[0]
+        self.assertEqual(created.name, self.usecase.name)
+        self.assertEqual(created.url, self.usecase.url)
+        self.assertEqual(created.user_id, self.usecase.user_id)
 
-    def test_invalid_values_are_caught(self):
-        self.uc.create_bookmark(self.user.id, 'test', 'gobbledigook', self.presenter_spy)
+    def test_invalid_url_is_caught(self):
+        self.usecase.url = 'goobledigook'
+        self.usecase.execute(self.presenter_spy)
         self.assertDictEqual(
-            {'url': ['Not a valid URL']},
-            self.presenter_spy.response_model['errors']
+            self.presenter_spy.response_model.errors,
+            {'url': 'Invalid URL'}
+        )
+
+    def test_invalid_name_is_caught(self):
+        self.usecase.name = 'too long ' * 400
+        self.usecase.execute(self.presenter_spy)
+        self.assertDictEqual(
+            self.presenter_spy.response_model.errors,
+            {'name': 'Name is too long'}
         )
 
 
 class CreateBookmarkPresentationTest(TestCase):
 
     def test_presenter_creates_view_model(self):
-        response = {'bookmark_id': 'id1', 'errors': {}}
+        response = create_bookmark.Response()
+        # response.bookmark_id = 'id1'
+        # response.errors = None
         presenter = create_bookmark.CreateBookmarkPresenter()
         presenter.present(response)
-        expected = {'bookmark_id': 'id1', 'errors': {}}
-        self.assertDictEqual(expected, presenter.get_view_model())
+        viewmodel = presenter.get_view_model()
+        # self.assertEqual('id1', viewmodel['bookmark_id'])
+        self.assertTrue(viewmodel['success'])
 
+    def test_view_model_has_errors(self):
+        response = create_bookmark.Response(errors={'url': 'Invalid URL'})
+        # response.bookmark_id = None
+        presenter = create_bookmark.CreateBookmarkPresenter()
+        presenter.present(response)
+        viewmodel = presenter.get_view_model()
+        # self.fail('Using presenter.present_errors')
+        self.assertEqual(viewmodel['errors'], {'url': 'Invalid URL'})
+        self.assertEqual(viewmodel['success'], False)
 
 class CreateBookmarkControllerTest(ControllerTestMixin, TestCase):
 
@@ -72,10 +92,15 @@ class CreateBookmarkControllerTest(ControllerTestMixin, TestCase):
             self.presenter,
             self.view
         )
-        self.request = {'user_id': 'id', 'name': 'name', 'url': 'url'}
+        self.request = {
+            'user_id': 'test-user',
+            'name': 'name',
+            'url': 'http://test.com'
+        }
 
     def test_usecase_is_called(self):
         self.controller.handle(self.request)
-        self.usecase.create_bookmark.assert_called_with(
-            'id', 'name', 'url', self.presenter
-        )
+        self.usecase.execute.assert_called_with(self.presenter)
+        self.assertEqual(self.usecase.user_id, 'test-user')
+        self.assertEqual(self.usecase.name, 'name')
+        self.assertEqual(self.usecase.url, 'http://test.com')

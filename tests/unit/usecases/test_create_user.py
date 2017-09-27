@@ -4,7 +4,7 @@ from links.context import context
 from links.entities import User
 from links.security import create_password_hash
 from links.usecases.create_user import CreateUserUseCase, CreateUserPresenter, CreateUserController
-from .base import UseCaseTest, PresenterSpy, ControllerTestMixin
+from tests.unit.usecases.base import UseCaseTest, PresenterSpy, ControllerTestMixin
 
 
 class CreateUserUseCaseTest(UseCaseTest):
@@ -17,8 +17,13 @@ class CreateUserUseCaseTest(UseCaseTest):
         self.user.password_hash = create_password_hash('password')
         context.user_repo.save(self.user)
 
+        self.request = {
+            'username': 'user',
+            'password': 'password'
+        }
+
     def test_user_not_created_when_user_already_exists(self):
-        self.uc.create_user('user', 'password', self.presenter_spy)
+        self.uc.execute(self.request, self.presenter_spy)
         self.assertDictEqual(
             {
                 'user_created': False,
@@ -29,7 +34,8 @@ class CreateUserUseCaseTest(UseCaseTest):
         )
 
     def test_invalid_username_is_rejected(self):
-        self.uc.create_user('user!@#$', 'password', self.presenter_spy)
+        self.request['username'] = 'user!@#$'
+        self.uc.execute(self.request, self.presenter_spy)
         self.assertDictEqual(
             {
                 'user_created': False,
@@ -40,7 +46,8 @@ class CreateUserUseCaseTest(UseCaseTest):
         )
 
     def test_user_is_created(self):
-        self.uc.create_user('newuser', 'password', self.presenter_spy)
+        self.request['username'] = 'newuser'
+        self.uc.execute(self.request, self.presenter_spy)
         self.assertDictEqual(
             {
                 'user_created': True,
@@ -77,4 +84,10 @@ class CreateUserControllerTest(ControllerTestMixin, TestCase):
 
     def test_usecase_is_called(self):
         self.controller.handle(self.request)
-        self.usecase.create_user.assert_called_with('user', 'password', self.presenter)
+        self.usecase.execute.assert_called_with(
+            {
+                'username': 'user',
+                'password': 'password',
+            },
+            self.presenter
+        )
